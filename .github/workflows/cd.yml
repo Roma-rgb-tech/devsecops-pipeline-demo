@@ -18,11 +18,11 @@ jobs:
           cd devsecops-gitops
 
           NEW_IMAGE="ghcr.io/roma-rgb-tech/devsecops-pipeline-demo:${{ github.sha }}"
-          sed -i "s|image:.*|image: ${NEW_IMAGE}|g" k8s/deployment.yaml
+          sed -i "s|image:.*|image: ${NEW_IMAGE}|g" k8s/deployment.yml
 
           git config user.email "ci@github.com"
           git config user.name "GitHub Actions"
-          git add k8s/deployment.yaml
+          git add k8s/deployment.yml
           git commit -m "ci: update image to ${{ github.sha }}"
           git push
 
