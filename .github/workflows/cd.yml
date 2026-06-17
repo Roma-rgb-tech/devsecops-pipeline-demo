@@ -8,21 +8,23 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to Railway
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
-      - name: Deploy
-        run: railway up --service ${{ secrets.RAILWAY_SERVICE_NAME }}
+      - name: Update image tag in GitOps repo
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          GITOPS_TOKEN: ${{ secrets.GITOPS_TOKEN }}
+        run: |
+          git clone https://x-access-token:${GITOPS_TOKEN}@github.com/Roma-rgb-tech/devsecops-gitops.git
+          cd devsecops-gitops
+
+          NEW_IMAGE="ghcr.io/roma-rgb-tech/devsecops-pipeline-demo:${{ github.sha }}"
+          sed -i "s|image:.*|image: ${NEW_IMAGE}|g" k8s/deployment.yaml
+
+          git config user.email "ci@github.com"
+          git config user.name "GitHub Actions"
+          git add k8s/deployment.yaml
+          git commit -m "ci: update image to ${{ github.sha }}"
+          git push
 
       - name: Notify Telegram — Deploy
         if: always()
