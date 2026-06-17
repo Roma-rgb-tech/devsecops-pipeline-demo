@@ -9,8 +9,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from datetime import datetime, UTC
 from typing import Optional
+from fastapi import FastAPI
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 import uvicorn
 
+app = FastAPI()
+
+FastAPIInstrumentor.instrument_app(app)
+
+@app.get("/")
+async def root():
+    return {"message": "Hello World"}
 
 app = FastAPI(
     title="🚀 Hackathon API",
