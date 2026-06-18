@@ -5,24 +5,16 @@ services:
       - "8000:8000"
     env_file:
       - .env
-    volumes:
-      - ./app:/app/app
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
     environment:
+      - OTEL_SERVICE_NAME=devsecops-app
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
-      - OTEL_SERVICE_NAME=fastapi-service
     depends_on:
       - otel-collector
 
   otel-collector:
-    image: otel/opentelemetry-collector:latest
-    command: ["--config=/etc/otel-config.yaml"]
-    volumes:
-      - ./infra/otel-config.yaml:/etc/otel-config.yaml
+    image: otel/opentelemetry-collector-contrib:0.96.0
     ports:
-      - "4317:4317" # OTLP gRPC
+      - "4317:4317"
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel/config.yaml
+    command: ["--config=/etc/otel/config.yaml"]
