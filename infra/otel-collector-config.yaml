@@ -1,0 +1,33 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+  resourcedetection:
+    detectors: [env, system]
+
+exporters:
+  otlphttp:
+    endpoint: "https://otlp-gateway-prod-eu-north-0.grafana.net/otlp"
+    headers:
+      authorization: "Basic MTY4NDM4MjpnbGNfZXlKdklqb2lNVGd3TlRZeE9TSXNJbTRpT2lKa1pYWnpaV052Y0hNdFpHVnRieUlzSW1zaU9pSTJNVEY0TjBkQ2J6ZHFUazF1TlRSTk5uaHJNRloxVlRRaUxDSnRJanA3SW5JaU9pSndjbTlrTFdWMUxXNXZjblJvTFRBaWZYMD0="
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch, resourcedetection]
+      exporters: [otlphttp]
+    metrics:
+      receivers: [otlp]
+      processors: [batch, resourcedetection]
+      exporters: [otlphttp]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp]

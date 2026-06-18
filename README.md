@@ -180,6 +180,10 @@ This project uses [Trivy](https://trivy.dev) to scan for vulnerabilities on ever
 
 This project is fully instrumented with a Prometheus + Loki + Grafana Cloud stack.
 
+- Traces → OpenTelemetry SDK → OTel Collector → Grafana Tempo
+- Metrics → Prometheus + prometheus-fastapi-instrumentator  
+- Logs → python-logging-loki → Grafana Loki
+
 ### Stack
 
 | Tool | Role | Integration |
