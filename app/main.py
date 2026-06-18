@@ -10,17 +10,26 @@ from pydantic import BaseModel
 from datetime import datetime, UTC
 from typing import Optional
 from fastapi import FastAPI
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-import uvicorn
+
+
+provider = TracerProvider()
+exporter = OTLPSpanExporter(
+    endpoint=os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://otel-collector:4317"),
+    insecure=True
+)
+provider.add_span_processor(BatchSpanProcessor(exporter))
+trace.set_tracer_provider(provider)
 
 app = FastAPI()
 
 FastAPIInstrumentor.instrument_app(app)
-
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
-
+    
+    
 app = FastAPI(
     title="🚀 Hackathon API",
     description="A production-ready FastAPI service deployed on Railway",
