@@ -8,13 +8,23 @@ services:
     environment:
       - OTEL_SERVICE_NAME=devsecops-app
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
     depends_on:
       - otel-collector
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.96.0
     ports:
       - "4317:4317"
+      - "4318:4318"
     volumes:
-      - ./otel-collector-config.yaml:/etc/otel/config.yaml
+     - ./infra/otel-collector-config.yaml:/etc/otel/config.yaml
+    environment:
+      - GRAFANA_ENDPOINT=${GRAFANA_ENDPOINT}
+      - GRAFANA_BASIC_AUTH=Basic ${GRAFANA_INSTANCE_ID}:${GRAFANA_API_KEY}
     command: ["--config=/etc/otel/config.yaml"]
