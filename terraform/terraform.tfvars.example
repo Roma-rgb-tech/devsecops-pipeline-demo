@@ -1,0 +1,8 @@
+aws_region         = "eu-central-1"
+project_name       = "devsecops-demo"
+environment        = "prod"
+instance_type      = "t2.micro"      
+key_pair_name      = "devsecops-demo-key" 
+app_port           = 8000
+vpc_cidr           = "10.0.0.0/16"
+public_subnet_cidr = "10.0.1.0/24"
