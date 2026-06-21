@@ -49,3 +49,20 @@ GRAFANA_API_KEY=${GRAFANA_API_KEY}
 EOF
 
 chown ubuntu:ubuntu /home/ubuntu/app/.env
+
+
+curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb \
+  -o /tmp/cloudflared.deb
+dpkg -i /tmp/cloudflared.deb
+
+
+cloudflared tunnel --url http://localhost:8000 \
+  --no-autoupdate \
+  --logfile /var/log/cloudflared.log \
+  --pidfile /var/run/cloudflared.pid \
+  --log-level info &
+
+
+sleep 5
+grep -o 'https://.*\.trycloudflare\.com' /var/log/cloudflared.log | head -1 | \
+  xargs -I{} echo "=== Tunnel URL: {} ===" | tee -a /var/log/user-data.log
