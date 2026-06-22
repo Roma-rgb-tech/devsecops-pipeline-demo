@@ -47,15 +47,35 @@ jobs:
           docker build -t ghcr.io/roma-rgb-tech/devsecops-pipeline-demo:${{ github.sha }} .
           docker push ghcr.io/roma-rgb-tech/devsecops-pipeline-demo:${{ github.sha }}
 
-      - name: Trivy — scan filesystem
+      - name: Trivy — generate JSON report for Splunk
+        uses: aquasecurity/trivy-action@v0.35.0
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "json"
+          output: "trivy-results.json"
+          severity: "CRITICAL,HIGH"
+
+      - name: Send Trivy Results to Splunk
+        env:
+          SPLUNK_URL: ${{ secrets.SPLUNK_HEC_URL }}
+          SPLUNK_TOKEN: ${{ secrets.SPLUNK_HEC_TOKEN }}
+        run: |
+          PAYLOAD=$(jq -n --argjson event "$(<trivy-results.json)" '{sourcetype: "_json", event: $event}')
+          
+          curl -k -X POST "$SPLUNK_URL" \
+            -H "Authorization: Splunk $SPLUNK_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD"
+
+      - name: Trivy — scan filesystem (Console Output & Fail)
         uses: aquasecurity/trivy-action@v0.35.0
         with:
           scan-type: "fs"
           scan-ref: "."
           format: "table"
-          exit-code: "1"
+          exit-code: "1" 
           severity: "CRITICAL,HIGH"
-
 
       - name: Notify Telegram
         if: always()
