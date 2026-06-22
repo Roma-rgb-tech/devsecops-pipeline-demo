@@ -53,7 +53,7 @@ class TestItems:
         body = r.json()
         assert body["id"] == 1
         assert body["name"] == "Widget"
-        assert body["price"] == 9.99
+        assert body["price"] == pytest.approx(9.99)
         assert "created_at" in body
 
     def test_create_minimal(self, client):
