@@ -442,7 +442,11 @@ async def list_items():
     return {"items": list(items_db.values()), "count": len(items_db)}
 
 
-@app.get("/items/{item_id}", tags=["Items"])
+@app.get(
+    "/items/{item_id}",
+    tags=["Items"],
+    responses={404: {"description": "Item not found"}},
+)
 async def get_item(item_id: int):
     """Get a single item by ID."""
     if item_id not in items_db:
@@ -460,7 +464,7 @@ async def create_item(item: Item):
     return record
 
 
-@app.delete("/items/{item_id}", tags=["Items"])
+@app.delete("/items/{item_id}", tags=["Items"], responses={404: {"description": "Item not found"}})
 async def delete_item(item_id: int):
     """Delete an item by ID."""
     if item_id not in items_db:
@@ -493,4 +497,5 @@ async def post_message(msg: Message):
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
+    host = os.environ.get("HOST", "127.0.0.1") 
+    uvicorn.run("main:app", host=host, port=port, reload=False)
