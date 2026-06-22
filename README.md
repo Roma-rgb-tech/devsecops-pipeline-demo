@@ -219,3 +219,44 @@ Logs are pushed to Loki in structured JSON format via `python-logging-loki`.
 To connect your own Grafana instance, add these datasources:
 - **Prometheus** → scrape `http://localhost:8000/metrics`
 - **Loki** → configure `python-logging-loki` with your Loki push URL
+
+---
+ 
+## 🛡️ DevSecOps & Security Observability
+ 
+Security scan results from every CI run are automatically ingested into **Splunk Enterprise** for centralized vulnerability tracking and alerting.
+<img width="1866" height="956" alt="image" src="https://github.com/user-attachments/assets/75fe7471-4e6d-4c96-abf3-d9e7562bd626" />
+
+ 
+### How it works
+ 
+| Stage | Tool | Action |
+|-------|------|--------|
+| Scanning | Trivy | FS & container scan (CRITICAL/HIGH) |
+| Ingestion | Splunk HEC | Secure HTTP POST with structured JSON |
+| Analysis | SPL | Real-time CVE parsing by severity and package |
+| Alerting | Splunk Alerts | Automated notifications on security regressions |
+ 
+### CI integration
+ 
+```yaml
+# .github/workflows/ci.yml
+- name: Push Trivy results to Splunk
+  run: |
+    curl -k -X POST "${{ secrets.SPLUNK_HEC_URL }}/services/collector/event" \
+      -H "Authorization: Splunk ${{ secrets.SPLUNK_HEC_TOKEN }}" \
+      -H "Content-Type: application/json" \
+      -d "{\"sourcetype\": \"_json\", \"event\": $(cat security_scan_report.json)}"
+```
+ 
+### SPL queries
+ 
+```spl
+index="security" sourcetype="_json"
+| rename "Results{}.Packages{}.Vulnerabilities{}.*" as *
+| table VulnerabilityID, PkgName, InstalledVersion, Severity
+| where isnotnull(VulnerabilityID)
+| sort - Severity
+```
+ 
+---
