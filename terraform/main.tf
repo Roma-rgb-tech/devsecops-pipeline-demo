@@ -7,10 +7,11 @@ resource "aws_instance" "app" {
 
 
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
-    app_port            = var.app_port
-    GRAFANA_ENDPOINT    = var.grafana_endpoint
-    GRAFANA_INSTANCE_ID = var.grafana_instance_id
-    GRAFANA_API_KEY     = var.grafana_api_key
+    app_port               = var.app_port
+    GRAFANA_ENDPOINT       = var.grafana_endpoint
+    GRAFANA_INSTANCE_ID    = var.grafana_instance_id
+    GRAFANA_API_KEY        = var.grafana_api_key
+    TUNNEL_URL_PLACEHOLDER = ""
   }))
 
   root_block_device {
