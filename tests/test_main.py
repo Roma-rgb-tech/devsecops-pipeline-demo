@@ -53,7 +53,7 @@ class TestItems:
         body = r.json()
         assert body["id"] == 1
         assert body["name"] == "Widget"
-        assert body["price"] == 9.99
+        assert body["price"] == pytest.approx(9.99)
         assert "created_at" in body
 
     def test_create_minimal(self, client):
@@ -129,3 +129,5 @@ class TestMessages:
     def test_post_invalid_missing_text(self, client):
         r = client.post("/messages", json={"author": "bob"})
         assert r.status_code == 422
+        
+        
