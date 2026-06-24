@@ -129,3 +129,5 @@ class TestMessages:
     def test_post_invalid_missing_text(self, client):
         r = client.post("/messages", json={"author": "bob"})
         assert r.status_code == 422
+        
+        
