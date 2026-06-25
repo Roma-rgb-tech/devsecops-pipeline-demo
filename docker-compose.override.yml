@@ -1,0 +1,11 @@
+# Local development overrides — NOT committed to production
+# Docker Compose automatically merges this with docker-compose.yml
+version: "3.9"
+
+services:
+  api:
+    volumes:
+      - ./app:/app/app          # hot reload — changes reflect instantly
+    environment:
+      - APP_ENV=development
+    command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
