@@ -1,0 +1,8 @@
+# Temporarily ignored CVEs in base image python:3.12-slim
+# These are unfixed upstream vulnerabilities with no available patch
+# Review date: 2026-07-25
+# Reference: https://github.com/advisories/
+
+# CVE in libssl - no fix available in python:3.12-slim as of 2026-06-25
+# CVE-2024-XXXX
+
