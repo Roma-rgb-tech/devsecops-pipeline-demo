@@ -17,10 +17,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: "pip"
@@ -48,7 +48,7 @@ jobs:
           docker push ghcr.io/roma-rgb-tech/devsecops-pipeline-demo:${{ github.sha }}
 
       - name: Trivy — generate JSON report for Splunk
-        uses: aquasecurity/trivy-action@v0.35.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: "fs"
           scan-ref: "."
@@ -69,7 +69,7 @@ jobs:
             -d "$PAYLOAD"
 
       - name: Trivy — scan filesystem (Console Output & Fail)
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
           scan-type: "fs"
           scan-ref: "."
@@ -79,7 +79,7 @@ jobs:
 
       - name: Notify Telegram
         if: always()
-        uses: appleboy/telegram-action@v0.1.1
+        uses: appleboy/telegram-action@v1.0.1
         with:
           to: ${{ secrets.TELEGRAM_TO }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
