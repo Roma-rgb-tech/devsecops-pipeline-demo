@@ -33,15 +33,17 @@ pipeline {
             }
         }
 
-        stage('Security Scan') {
-            steps {
-                sh '''
-                    trivy fs . \
-                        --severity CRITICAL,HIGH \
-                        --exit-code 1
-                '''
-            }
-        }
+      stage('Security Scan') {
+       steps {
+        sh '''
+            wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | apt-key add -
+            echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | tee -a /etc/apt/sources.list.d/trivy.list
+            apt-get update && apt-get install trivy -y
+            
+            trivy fs . --severity CRITICAL,HIGH --exit-code 1
+        '''
+    }
+}
 
         stage('Build') {
             steps {
