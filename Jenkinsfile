@@ -1,8 +1,8 @@
 pipeline {
     agent {
         docker {
-            image 'python:3.11-slim' 
-            args '-u root'
+            image 'python:3.11-slim'
+            args '-u root -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
 
@@ -12,66 +12,64 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
+
+        stage('Setup') {
             steps {
-                checkout scm
+                sh '''#!/bin/bash
+                    set -euo pipefail
+                    apt-get update
+                    apt-get install -y --no-install-recommends docker.io
+                '''
             }
         }
 
-        stage('Lint') {
+        stage('Lint & Test') {
             steps {
-                sh 'pip install ruff && ruff check app/'
-            }
-        }
-
-        stage('Test') {
-            steps {
-                sh '''
-                    pip install -r requirements.txt
+                sh '''#!/bin/bash
+                    set -euo pipefail
+                    pip install --no-cache-dir --upgrade pip
+                    pip install --no-cache-dir ruff pytest -r requirements.txt
+                    ruff check app/
                     pytest tests/ -v
                 '''
             }
         }
 
-      stage('Security Scan') {
-       steps {
-        sh '''
-            wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | apt-key add -
-            echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | tee -a /etc/apt/sources.list.d/trivy.list
-            apt-get update && apt-get install trivy -y
-            
-            trivy fs . --severity CRITICAL,HIGH --exit-code 1
-        '''
-    }
-}
-
-        stage('Build') {
+        stage('Security Scan') {
             steps {
-                sh "docker build -t ${REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER} ."
+                sh '''#!/bin/bash
+                    set -euo pipefail
+                    docker run --rm -v "$(pwd):/repo" aquasec/trivy:latest fs \
+                        --severity CRITICAL,HIGH --exit-code 1 /repo
+                '''
             }
         }
 
-        stage('Push') {
-            when {
-                branch 'main'
-            }
+        stage('Build & Push') {
             steps {
-                withCredentials([string(credentialsId: 'ghcr-token', variable: 'GHCR_TOKEN')]) {
-                    sh '''
-                        echo $GHCR_TOKEN | docker login ghcr.io -u roma-rgb-tech --password-stdin
-                        docker push ${REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}
-                    '''
+                script {
+                    withCredentials([string(credentialsId: 'ghcr-token', variable: 'GHCR_TOKEN')]) {
+                        sh '''#!/bin/bash
+                            set -euo pipefail
+                            echo "$GHCR_TOKEN" | docker login ghcr.io -u roma-rgb-tech --password-stdin
+                        '''
+                    }
+
+                    sh "docker build -t ${REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER} ."
+
+                    if (env.BRANCH_NAME == 'main') {
+                        sh "docker push ${REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}"
+                    } else {
+                        echo "Push skiped: BRANCH_NAME='${env.BRANCH_NAME}', not 'main'."
+                    }
                 }
             }
         }
     }
 
     post {
-        success {
-            echo 'Pipeline succeeded!'
-        }
-        failure {
-            echo 'Pipeline failed!'
+        always {
+            sh 'docker logout ghcr.io || true'
         }
     }
 }
