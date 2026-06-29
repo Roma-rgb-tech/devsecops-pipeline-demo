@@ -258,5 +258,4 @@ index="security" sourcetype="_json"
 | where isnotnull(VulnerabilityID)
 | sort - Severity
 ```
- 
 ---
