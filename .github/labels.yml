@@ -1,0 +1,6 @@
+- name: security
+  color: d73a4a
+- name: infrastructure  
+  color: 0075ca
+- name: observability
+  color: 1D9E75
