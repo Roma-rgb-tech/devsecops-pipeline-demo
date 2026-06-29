@@ -1,10 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'python:3.11-slim'
-            args '-u root -v /var/run/docker.sock:/var/run/docker.sock'
-        }
-    }
+    agent none
 
     environment {
         IMAGE_NAME = "devsecops-demo"
@@ -13,17 +8,10 @@ pipeline {
 
     stages {
 
-        stage('Setup') {
-            steps {
-                sh '''#!/bin/bash
-                    set -euo pipefail
-                    apt-get update
-                    apt-get install -y --no-install-recommends docker.io
-                '''
-            }
-        }
-
         stage('Lint & Test') {
+            agent {
+                docker { image 'python:3.11-slim' }
+            }
             steps {
                 sh '''#!/bin/bash
                     set -euo pipefail
@@ -36,9 +24,15 @@ pipeline {
         }
 
         stage('Security Scan') {
+            agent {
+                docker {
+                    image 'docker:cli'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock'
+                }
+            }
             steps {
-                sh '''#!/bin/bash
-                    set -euo pipefail
+                sh '''#!/bin/sh
+                    set -eu
                     docker run --rm -v "$(pwd):/repo" aquasec/trivy:latest fs \
                         --severity CRITICAL,HIGH --exit-code 1 /repo
                 '''
@@ -46,11 +40,17 @@ pipeline {
         }
 
         stage('Build & Push') {
+            agent {
+                docker {
+                    image 'docker:cli'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock'
+                }
+            }
             steps {
                 script {
                     withCredentials([string(credentialsId: 'ghcr-token', variable: 'GHCR_TOKEN')]) {
-                        sh '''#!/bin/bash
-                            set -euo pipefail
+                        sh '''#!/bin/sh
+                            set -eu
                             echo "$GHCR_TOKEN" | docker login ghcr.io -u roma-rgb-tech --password-stdin
                         '''
                     }
@@ -64,12 +64,11 @@ pipeline {
                     }
                 }
             }
-        }
-    }
-
-    post {
-        always {
-            sh 'docker logout ghcr.io || true'
+            post {
+                always {
+                    sh 'docker logout ghcr.io || true'
+                }
+            }
         }
     }
 }
