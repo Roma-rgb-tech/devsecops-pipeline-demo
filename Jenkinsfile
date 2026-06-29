@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'python:3.11-slim' 
+            args '-u root'
+        }
+    }
 
     environment {
         IMAGE_NAME = "devsecops-demo"
