@@ -25,3 +25,5 @@ infra/alloy/config.alloy
 .vscode/
 .idea/
 *.swpterraform.tfvars
+
+node_modules/
