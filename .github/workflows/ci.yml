@@ -1,44 +1,34 @@
 name: CI
-
 on:
   push:
     branches: ["main"]
   pull_request:
     branches: ["main"]
-
 permissions:
   contents: read
   packages: write
-
 jobs:
   ci:
     name: Lint · Test · Scan
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: "pip"
-
       - name: Install dependencies
         run: pip install -r requirements.txt
-
       - name: Lint (ruff)
         run: |
           pip install ruff
           ruff check app/
-
       - name: Run tests
         run: pytest tests/ -v
-
       - name: Build Docker image
         run: docker build -t hackathon-app:${{ github.sha }} .
-
       - name: Push to GHCR
         env:
            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -46,7 +36,19 @@ jobs:
           echo $GITHUB_TOKEN | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           docker build -t ghcr.io/roma-rgb-tech/devsecops-pipeline-demo:${{ github.sha }} .
           docker push ghcr.io/roma-rgb-tech/devsecops-pipeline-demo:${{ github.sha }}
-
+      - name: Generate SBOM (CycloneDX)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: "image"
+          image-ref: "ghcr.io/roma-rgb-tech/devsecops-pipeline-demo:${{ github.sha }}"
+          format: "cyclonedx"
+          output: "sbom.cdx.json"
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ github.sha }}
+          path: sbom.cdx.json
+          retention-days: 90
       - name: Trivy — generate JSON report for Splunk
         uses: aquasecurity/trivy-action@v0.36.0
         with:
@@ -55,7 +57,6 @@ jobs:
           format: "json"
           output: "trivy-results.json"
           severity: "CRITICAL,HIGH"
-
       - name: Send Trivy Results to Splunk
         env:
           SPLUNK_URL: ${{ secrets.SPLUNK_HEC_URL }}
@@ -67,7 +68,6 @@ jobs:
             -H "Authorization: Splunk $SPLUNK_TOKEN" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD"
-
       - name: Trivy — scan filesystem (Console Output & Fail)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
@@ -76,7 +76,6 @@ jobs:
           format: "table"
           exit-code: "1" 
           severity: "CRITICAL,HIGH"
-
       - name: Notify Telegram
         if: always()
         uses: appleboy/telegram-action@v1.0.1
