@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/Roma-rgb-tech/devsecops-pipeline-demo/compare/v1.0.0...v1.0.1) (2026-07-02)
+
+
+### Bug Fixes
+
+* update node version for semantic-release ([7f41e69](https://github.com/Roma-rgb-tech/devsecops-pipeline-demo/commit/7f41e69af5cf94592ad7af6dada3aec2db8f9b85))
+
 # 1.0.0 (2026-07-02)
 
 
